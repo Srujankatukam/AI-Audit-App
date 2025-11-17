@@ -1,0 +1,133 @@
+# Azure DevOps Pipeline for AI-Audit-App
+# Deploys to Azure Web App (Linux Python)
+
+trigger:
+  branches:
+    include:
+      - main
+      - master
+  paths:
+    exclude:
+      - docs/**
+      - README.md
+      - .gitignore
+
+pr:
+  branches:
+    include:
+      - main
+      - master
+
+variables:
+  # Python version to use
+  pythonVersion: '3.12'
+  
+  # Azure Web App name (set this to your Web App name)
+  azureWebAppName: 'your-app-name'
+  
+  # Azure subscription connection (set in Azure DevOps > Service Connections)
+  azureServiceConnection: 'your-service-connection-name'
+  
+  # Working directory
+  workingDirectory: '$(System.DefaultWorkingDirectory)'
+
+stages:
+  # =====================================
+  # BUILD STAGE
+  # =====================================
+  - stage: Build
+    displayName: 'Build Application'
+    jobs:
+      - job: Build
+        displayName: 'Build Python Application'
+        pool:
+          vmImage: 'ubuntu-latest'
+        
+        steps:
+          # Checkout code
+          - checkout: self
+            displayName: 'Checkout repository'
+          
+          # Set up Python
+          - task: UsePythonVersion@0
+            inputs:
+              versionSpec: '$(pythonVersion)'
+              displayName: 'Use Python $(pythonVersion)'
+          
+          # Install dependencies
+          - script: |
+              python -m pip install --upgrade pip
+              pip install -r requirements.txt
+            displayName: 'Install dependencies'
+            workingDirectory: '$(workingDirectory)'
+          
+          # Run tests (optional - uncomment if you have tests)
+          # - script: |
+          #     pip install pytest pytest-asyncio httpx
+          #     pytest test_example.py -v
+          #   displayName: 'Run tests'
+          #   workingDirectory: '$(workingDirectory)'
+          
+          # Create artifact
+          - task: ArchiveFiles@2
+            inputs:
+              rootFolderOrFile: '$(workingDirectory)'
+              includeRootFolder: false
+              archiveType: 'zip'
+              archiveFile: '$(Build.ArtifactStagingDirectory)/$(Build.BuildId).zip'
+              replaceExistingArchive: true
+              # Exclude files not needed in production
+              excludeFilesFromZip: |
+                **/__pycache__/**
+                **/*.pyc
+                **/.git/**
+                **/test_*.py
+                **/.env
+                **/docs/**
+            displayName: 'Archive application files'
+          
+          # Publish artifact
+          - task: PublishBuildArtifacts@1
+            inputs:
+              PathtoPublish: '$(Build.ArtifactStagingDirectory)/$(Build.BuildId).zip'
+              ArtifactName: 'drop'
+              publishLocation: 'Container'
+            displayName: 'Publish artifact'
+
+  # =====================================
+  # DEPLOY STAGE
+  # =====================================
+  - stage: Deploy
+    displayName: 'Deploy to Azure Web App'
+    dependsOn: Build
+    condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/main'))
+    jobs:
+      - deployment: Deploy
+        displayName: 'Deploy to Azure'
+        environment: 'production'
+        pool:
+          vmImage: 'ubuntu-latest'
+        
+        strategy:
+          runOnce:
+            deploy:
+              steps:
+                # Download artifact
+                - task: DownloadBuildArtifacts@0
+                  inputs:
+                    buildType: 'current'
+                    downloadType: 'single'
+                    artifactName: 'drop'
+                    downloadPath: '$(System.ArtifactsDirectory)'
+                  displayName: 'Download artifact'
+                
+                # Deploy to Azure Web App
+                - task: AzureWebApp@1
+                  inputs:
+                    azureSubscription: '$(azureServiceConnection)'
+                    appType: 'webAppLinux'
+                    appName: '$(azureWebAppName)'
+                    package: '$(System.ArtifactsDirectory)/drop/$(Build.BuildId).zip'
+                    runtimeStack: 'PYTHON|3.12'
+                    startUpCommand: 'uvicorn main:app --host 0.0.0.0 --port 8000'
+                  displayName: 'Deploy to Azure Web App'
