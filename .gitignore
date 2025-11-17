@@ -1,0 +1,90 @@
+# Environment Variables and Secrets
+.env
+.env.local
+.env.*.local
+*.env
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+pip-wheel-metadata/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Virtual Environments
+venv/
+env/
+ENV/
+env.bak/
+venv.bak/
+.venv/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+.hypothesis/
+
+# Logs
+*.log
+logs/
+*.log.*
+
+# Generated PDFs (temporary files)
+*.pdf
+ai_audit_*.pdf
+/tmp/ai_audit_reports/
+
+# Azure
+.azure/
+
+# Docker
+.dockerignore
+
+# Local development
+ngrok
+*.ngrok
+
+# Backup files
+*.backup
+*.bak
+*.old
+
+# OS
+Thumbs.db
+.DS_Store
+
+# Jupyter Notebooks (if any)
+.ipynb_checkpoints/
+
+# mypy
+.mypy_cache/
+.dmypy.json
+dmypy.json
