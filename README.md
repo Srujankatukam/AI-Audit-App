@@ -7,7 +7,7 @@
 [![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 --- 
-
+ 
 ## 🎯 Overview
 
 AI-Audit-App is an intelligent web application that automatically generates comprehensive AI maturity audit reports for companies. It receives company data via webhook, analyzes it using Azure OpenAI, creates professional PDF reports with visualizations, and delivers them via email.
